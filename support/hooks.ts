@@ -8,7 +8,7 @@ const iPhone = devices['iPhone 12'];
 setDefaultTimeout(30 * 2000);
 
 Before(async function (this: CustomWorld) {
-  this.browser = await chromium.launch({ headless: false });
+  this.browser = await chromium.launch({ headless: true });
 
   const context = await this.browser.newContext({
     storageState: './google-auth.json',
