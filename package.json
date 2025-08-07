@@ -1,0 +1,34 @@
+{
+  "name": "hc_epub_automation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "cucumber-js --format json:report/cucumber_report.json",
+    "report": "node generate-report.js",
+    "screenshot": "node capture-screenshot.js",
+    "inject-timeline": "node timeline-injector.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.2.0",
+    "@playwright/test": "^1.51.1",
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/node": "^22.14.0",
+    "@types/ws": "^8.18.1",
+    "multiple-cucumber-html-reporter": "^3.9.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "fuzzysort": "^3.1.0",
+    "playwright": "^1.51.1",
+    "puppeteer": "^24.6.1",
+    "wav-decoder": "^1.3.0",
+    "ws": "^8.18.3"
+  }
+}

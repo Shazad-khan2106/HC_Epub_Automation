@@ -1,0 +1,76 @@
+[
+  {
+    "description": "",
+    "elements": [
+      {
+        "description": "",
+        "id": "validating-login-in-creative-workspace;scenario-name:-login-to-creative-workspace",
+        "keyword": "Scenario",
+        "line": 3,
+        "name": "Scenario name: Login to Creative Workspace",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 935843399
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 4,
+            "name": "I open the Creative Workspace login page",
+            "match": {
+              "location": "tests\\steps\\home.step.ts:8"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 7111292899
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 5,
+            "name": "I should see the homepage",
+            "match": {
+              "location": "tests\\steps\\home.step.ts:13"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 37347900
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 1779421500
+            },
+            "embeddings": [
+              {
+                "data": "WzIwMjUtMDgtMDdUMDk6Mzk6MjMuNjI3Wl0gTmF2aWdhdGluZyB0byBDcmVhdGl2ZSBXb3Jrc3BhY2UgbG9naW4gcGFnZQpbMjAyNS0wOC0wN1QwOTozOTozMC43NzVaXSBIb21lcGFnZSB2aXNpYmlsaXR5OiBmYWxzZQ==",
+                "mime_type": "text/plain"
+              },
+              {
+                "data": "",
+                "mime_type": "video/webm"
+              }
+            ]
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      }
+    ],
+    "id": "validating-login-in-creative-workspace",
+    "line": 1,
+    "keyword": "Feature",
+    "name": "Validating Login in Creative Workspace",
+    "tags": [],
+    "uri": "tests\\features\\login.feature"
+  }
+]

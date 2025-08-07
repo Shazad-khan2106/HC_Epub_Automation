@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+      "target": "ES6",
+      "module": "commonjs",
+      "lib": ["es6", "DOM"],
+      "strict": true,
+      "esModuleInterop": true,
+      "outDir": "dist",
+      "types": ["@playwright/test", "node"],
+      "resolveJsonModule": true
+
+
+    },
+    "include": ["tests/**/*.ts"]
+  }
+  
