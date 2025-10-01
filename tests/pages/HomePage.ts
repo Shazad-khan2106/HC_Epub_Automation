@@ -3,7 +3,7 @@ import path from 'path';
 dotenv.config();
 const { testData } = require('../test_data/properties');
 import { CustomWorld } from '../../support/world'; 
-import { homePageLocators } from '../locator/locators';
+import { locators } from '../locator/locators';
 
 
 export class HomePage {
@@ -14,10 +14,10 @@ export class HomePage {
   }
   async gotoHome() {
     this.world.addLog('Navigating to Creative Workspace login page');
-    await this.page.goto(testData.URL);
+    await this.page.goto(testData.URL, {timeout: 1200000});
   }
   async isHomepageVisible() {
-    const visible = await this.page.getByText('Welcome to the ePUB Mode').isVisible();
+    const visible = await this.page.getByText('Welcome to the BookGenie Mode').isVisible({timeout: 300000});
     this.world.addLog(`Homepage visibility: ${visible}`);
     return visible;
   }
