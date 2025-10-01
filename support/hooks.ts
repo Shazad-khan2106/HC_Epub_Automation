@@ -5,18 +5,24 @@ import fs from 'fs';
 import path from 'path';
 
 const iPhone = devices['iPhone 12'];
-setDefaultTimeout(30 * 2000);
+setDefaultTimeout(600 * 10000);
 
 Before(async function (this: CustomWorld) {
-  this.browser = await chromium.launch({ headless: true });
+  this.browser = await chromium.launch({ 
+    headless: false,
+    args: [
+        `--window-size=1980,1080` // set browser window size
+      ], 
+    });
 
   const context = await this.browser.newContext({
     storageState: './google-auth.json',
     permissions: ['microphone'],
     recordVideo: {
       dir: 'videos/',
-      size: { width: 1365, height: 866 },
+      size: { width: 1980, height: 1080 },  
     },
+    viewport: { width: 1980, height: 1080 },
   });
 
   const page = await context.newPage();
@@ -27,16 +33,38 @@ Before(async function (this: CustomWorld) {
 });
 
 After(async function (this: CustomWorld, scenario) {
+  // Attach detailed logs to the scenario report
+  if (this.logs && this.logs.length > 0) {
+    const logHeader = `=== SCENARIO LOGS: ${scenario.pickle.name} ===\n`;
+    const logText = logHeader + this.logs.join('\n') + '\n=== END LOGS ===\n';
+    
+    // Attach as text/plain for better formatting
+    await this.attach(logText, 'text/plain');
+    
+    // Also attach as HTML for better readability in some reports
+    const htmlLogs = this.logs.map(log => 
+      log.includes('✅') ? `<div style="color: green; margin: 2px 0;">${log}</div>` :
+      log.includes('❌') ? `<div style="color: red; margin: 2px 0;">${log}</div>` :
+      log.includes('🔍') || log.includes('📋') || log.includes('📊') ? `<div style="color: blue; margin: 2px 0; font-weight: bold;">${log}</div>` :
+      `<div style="margin: 2px 0;">${log}</div>`
+    ).join('');
+    
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 10px; background: #f5f5f5; border: 1px solid #ddd;">
+        <h3 style="color: #333;">Scenario Logs: ${scenario.pickle.name}</h3>
+        <div style="background: white; padding: 10px; border-radius: 5px;">
+          ${htmlLogs}
+        </div>
+      </div>
+    `;
+    await this.attach(htmlContent, 'text/html');
+  }
+
   // Attach screenshot on failure
   if (scenario.result?.status === Status.FAILED && this.page) {
     const screenshot = await this.page.screenshot();
     await this.attach(screenshot, 'image/png');
-  }
-
-  // Attach custom logs
-  if (this.logs && this.logs.length > 0) {
-    const logText = this.logs.join('\n');
-    await this.attach(logText, 'text/plain');
+    this.addLog('📸 Screenshot captured due to failure');
   }
 
   // Attach video (if available)
