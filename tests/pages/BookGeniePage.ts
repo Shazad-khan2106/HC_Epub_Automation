@@ -89,6 +89,13 @@ export class BookGeniePage {
             await thinkingIndicator.waitFor({ state: 'hidden', timeout: 300000 });
             this.world.addSuccessLog('✓ AI thinking completed - Response should be ready');
             
+            // NEW: Check for "None of the above" option after thinking completes
+            const handledNoneOfTheAbove = await this.checkAndHandleNoneOfTheAbove();
+            
+            if (handledNoneOfTheAbove) {
+                this.world.addMetricLog('"None of the above" option was handled successfully');
+            }
+            
             this.world.addInfoLog('Allowing additional time for response rendering');
             await this.page.waitForTimeout(3000);
             
@@ -96,11 +103,84 @@ export class BookGeniePage {
             this.world.addErrorLog('AI thinking indicator not found or timeout occurred');
             this.world.addInfoLog('Falling back to 2-minute wait');
             await this.page.waitForTimeout(120000);
+            
+            // NEW: Even in fallback, check for "None of the above" option
+            const handledNoneOfTheAbove = await this.checkAndHandleNoneOfTheAbove();
+            
+            if (handledNoneOfTheAbove) {
+                this.world.addMetricLog('"None of the above" option was handled during fallback');
+            }
+            
             this.world.addInfoLog('Fallback wait completed');
         }
         
         this.world.addSuccessLog('AI response wait process completed');
     }
+    // ENHANCED VERSION with better error handling and logging
+private async checkAndHandleNoneOfTheAbove(): Promise<boolean> {
+    try {
+        this.world.addInfoLog('🔍 Checking for "None of the above" option...');
+        
+        // Define the locator for "None of the above" option
+        const noneOfTheAboveLocator = this.page.locator("//span[starts-with(normalize-space(), 'None of the above')]");
+        
+        // Check if the element exists and is visible
+        const isVisible = await noneOfTheAboveLocator.isVisible().catch(() => false);
+        
+        if (!isVisible) {
+            this.world.addInfoLog('✓ "None of the above" option not present - proceeding normally');
+            return false;
+        }
+        
+        this.world.addInfoLog('✓ "None of the above" option found - preparing to click');
+        
+        // Ensure the element is still visible before clicking
+        await noneOfTheAboveLocator.waitFor({ state: 'visible', timeout: 5000 });
+        
+        // Click on the "None of the above" option
+        await noneOfTheAboveLocator.click();
+        this.world.addSuccessLog('✅ Clicked on "None of the above" option');
+        
+        // Wait for the element to disappear after clicking
+        await noneOfTheAboveLocator.waitFor({ state: 'hidden', timeout: 10000 })
+            .then(() => {
+                this.world.addInfoLog('✓ "None of the above" option disappeared after click');
+            })
+            .catch(() => {
+                this.world.addWarningLog('"None of the above" option still visible after click');
+            });
+        
+        // Wait for AI to process the selection - check for thinking indicator
+        this.world.addInfoLog('⏳ Waiting for AI to process "None of the above" selection...');
+        
+        const thinkingIndicator = this.page.getByText('Creative Workspace AI is thinking', { exact: false });
+        
+        try {
+            // Wait for thinking indicator to appear (if it does)
+            await thinkingIndicator.waitFor({ state: 'visible', timeout: 30000 });
+            this.world.addInfoLog('✓ AI thinking indicator appeared after "None of the above" selection');
+            
+            // Wait for thinking to complete again
+            await thinkingIndicator.waitFor({ state: 'hidden', timeout: 180000 });
+            this.world.addSuccessLog('✅ AI thinking completed after "None of the above" selection');
+            
+        } catch (thinkError) {
+            this.world.addWarningLog('No thinking indicator appeared after "None of the above" selection');
+            this.world.addInfoLog('Waiting additional time for response processing...');
+            await this.page.waitForTimeout(5000);
+        }
+        
+        // Final wait for response rendering
+        await this.page.waitForTimeout(2000);
+        this.world.addSuccessLog('✅ "None of the above" handling completed successfully');
+        return true;
+        
+    } catch (error) {
+        this.world.addErrorLog(`❌ Error handling "None of the above" option: ${error}`);
+        this.world.addInfoLog('Continuing with normal flow despite error');
+        return false;
+    }
+}
 
     async validateResponse(query: string) {
         this.world.addHeaderLog(`VALIDATING RESPONSE FOR QUERY: "${query}"`);
