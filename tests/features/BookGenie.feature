@@ -17,7 +17,7 @@ Scenario Outline: Book Genie Response Validation with Citation Verification
     And I validate that reason texts match citation texts with 80% similarity
     And I generate detailed citation validation report
     Then I verify database connectivity
-    And database should contain 2020 books
+    And database should contain 10032 books
     And I validate extracted books individually against database
     And I validate BookGenie response relevance with AI for query "<query>"
     
