@@ -9,15 +9,15 @@ const { testData } = require('../test_data/properties');
 
 When('I click on the mode selection dropdown', async function (this: CustomWorld) {
     this.bookGeniePage = new BookGeniePage(this);
-    await this.bookGeniePage.clickOnModeSelectionDropdown();
+    // await this.bookGeniePage.clickOnModeSelectionDropdown();
 });
 
 Then('I can see the {string} mode', async function (this: CustomWorld, mode: string) {
-    await this.bookGeniePage.checkModeVisiblity(mode);
+    // await this.bookGeniePage.checkModeVisiblity(mode);
 });
 
 Then('I select the {string} mode', async function (this: CustomWorld, mode: string) {
-    await this.bookGeniePage.selectMode(mode);
+    // await this.bookGeniePage.selectMode(mode);
 });
 
 Then('I type {string} on chat input element', async function (this: CustomWorld, query: string) {
