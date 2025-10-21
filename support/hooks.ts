@@ -22,7 +22,7 @@ Before(async function (this: CustomWorld) {
       dir: 'videos/',
       size: { width: 1980, height: 1080 },  
     },
-    viewport: { width: 1980, height: 1080 },
+    viewport: { width: 1980, height: 980 },
   });
 
   const page = await context.newPage();

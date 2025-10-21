@@ -5,7 +5,8 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    - cron: '0 */6 * * *'
+  - cron: '30 8 * * *'   # 2:00 PM IST = 08:30 UTC
+  - cron: '30 16 * * *'  # 10:00 PM IST = 16:30 UTC
 
 permissions:
   contents: write

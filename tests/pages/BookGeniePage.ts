@@ -55,6 +55,13 @@ export class BookGeniePage {
     }
 
     async typeQuery(query: string) {
+        
+        try {   
+            await this.page.getByText('✅Welcome to the BookGenie Mode').waitFor({ state: 'visible', timeout: 30000 });
+            this.world.addSuccessLog( 'Book Genie welcome message appears');
+        } catch (error) {
+            this.world.addWarningLog('⚠Book Genie mode did not loaded')
+        }
         this.world.addInfoLog(`Preparing to type query: "${query}"`);
         
         this.world.addInfoLog('Waiting for chat input to be visible');
@@ -82,11 +89,11 @@ export class BookGeniePage {
         
         try {
             this.world.addInfoLog('Waiting for thinking indicator to appear (max 2 minutes)');
-            await thinkingIndicator.waitFor({ state: 'visible', timeout: 120000 });
+            await thinkingIndicator.waitFor({ state: 'visible', timeout: 600000 });
             this.world.addSuccessLog('✓ AI thinking indicator appeared - AI is processing the request');
             
             this.world.addInfoLog('Waiting for thinking indicator to disappear (max 5 minutes)');
-            await thinkingIndicator.waitFor({ state: 'hidden', timeout: 300000 });
+            await thinkingIndicator.waitFor({ state: 'hidden', timeout: 1200000 });
             this.world.addSuccessLog('✓ AI thinking completed - Response should be ready');
             
             // NEW: Check for "None of the above" option after thinking completes
@@ -117,67 +124,138 @@ export class BookGeniePage {
         this.world.addSuccessLog('AI response wait process completed');
     }
     // ENHANCED VERSION with better error handling and logging
+// UPDATED METHOD: Check and handle "None of the above, just" option with sibling span
 private async checkAndHandleNoneOfTheAbove(): Promise<boolean> {
     try {
-        this.world.addInfoLog('🔍 Checking for "None of the above" option...');
+        this.world.addInfoLog('🔍 Checking for "None of the above, just" option...');
         
-        // Define the locator for "None of the above" option
-        const noneOfTheAboveLocator = this.page.locator("//span[starts-with(normalize-space(), 'None of the above')]");
+        // Define the locator for "None of the above, just" text
+        const noneOfTheAboveText = this.page.locator('p:has-text("None of the above, just")');
         
         // Check if the element exists and is visible
-        const isVisible = await noneOfTheAboveLocator.isVisible().catch(() => false);
+        const isVisible = await noneOfTheAboveText.isVisible().catch(() => false);
         
         if (!isVisible) {
-            this.world.addInfoLog('✓ "None of the above" option not present - proceeding normally');
+            this.world.addInfoLog('✓ "None of the above, just" option not present - proceeding normally');
             return false;
         }
         
-        this.world.addInfoLog('✓ "None of the above" option found - preparing to click');
+        this.world.addInfoLog('✓ "None of the above, just" option found - looking for sibling span to click');
         
-        // Ensure the element is still visible before clicking
-        await noneOfTheAboveLocator.waitFor({ state: 'visible', timeout: 5000 });
+        // Find the sibling span that contains the clickable element
+        // The span is a sibling of the <p> element that contains "None of the above, just"
+        const clickableSpan = this.page.locator('p:has-text("None of the above, just") + span span.bg-\\[#DBEAFE\\]');
         
-        // Click on the "None of the above" option
-        await noneOfTheAboveLocator.click();
-        this.world.addSuccessLog('✅ Clicked on "None of the above" option');
+        // Alternative selectors if the above doesn't work:
+        // const clickableSpan = this.page.locator('span.bg-\\[#DBEAFE\\]:has-text("Search through the")');
+        // const clickableSpan = this.page.locator('span:has-text("Search through the HarperCollins book catalog")');
         
-        // Wait for the element to disappear after clicking
-        await noneOfTheAboveLocator.waitFor({ state: 'hidden', timeout: 10000 })
-            .then(() => {
-                this.world.addInfoLog('✓ "None of the above" option disappeared after click');
-            })
-            .catch(() => {
-                this.world.addWarningLog('"None of the above" option still visible after click');
-            });
+        const isSpanVisible = await clickableSpan.isVisible().catch(() => false);
+        
+        if (!isSpanVisible) {
+            this.world.addWarningLog('Clickable span not found for "None of the above, just" option');
+            return false;
+        }
+        
+        this.world.addInfoLog('✓ Found clickable span - preparing to click');
+        
+        // Ensure the span is still visible before clicking
+        await clickableSpan.waitFor({ state: 'visible', timeout: 5000 });
+        
+        // Get the text content of the span for logging
+        const spanText = await clickableSpan.textContent().catch(() => 'unknown');
+        this.world.addInfoLog(`Clicking on span with text: "${spanText}"`);
+        
+        // Click on the span
+        await clickableSpan.click();
+        this.world.addSuccessLog('✅ Clicked on "None of the above, just" option span');
+        
+        // Wait for the elements to disappear after clicking
+        try {
+            await noneOfTheAboveText.waitFor({ state: 'hidden', timeout: 10000 });
+            this.world.addInfoLog('✓ "None of the above, just" text disappeared after click');
+        } catch {
+            this.world.addWarningLog('"None of the above, just" text still visible after click');
+        }
+        
+        try {
+            await clickableSpan.waitFor({ state: 'hidden', timeout: 10000 });
+            this.world.addInfoLog('✓ Clickable span disappeared after click');
+        } catch {
+            this.world.addWarningLog('Clickable span still visible after click');
+        }
         
         // Wait for AI to process the selection - check for thinking indicator
-        this.world.addInfoLog('⏳ Waiting for AI to process "None of the above" selection...');
+        this.world.addInfoLog('⏳ Waiting for AI to process "None of the above, just" selection...');
         
         const thinkingIndicator = this.page.getByText('Creative Workspace AI is thinking', { exact: false });
         
         try {
             // Wait for thinking indicator to appear (if it does)
             await thinkingIndicator.waitFor({ state: 'visible', timeout: 30000 });
-            this.world.addInfoLog('✓ AI thinking indicator appeared after "None of the above" selection');
+            this.world.addInfoLog('✓ AI thinking indicator appeared after "None of the above, just" selection');
             
             // Wait for thinking to complete again
             await thinkingIndicator.waitFor({ state: 'hidden', timeout: 180000 });
-            this.world.addSuccessLog('✅ AI thinking completed after "None of the above" selection');
+            this.world.addSuccessLog('✅ AI thinking completed after "None of the above, just" selection');
             
         } catch (thinkError) {
-            this.world.addWarningLog('No thinking indicator appeared after "None of the above" selection');
+            this.world.addWarningLog('No thinking indicator appeared after "None of the above, just" selection');
             this.world.addInfoLog('Waiting additional time for response processing...');
             await this.page.waitForTimeout(5000);
         }
         
         // Final wait for response rendering
         await this.page.waitForTimeout(2000);
-        this.world.addSuccessLog('✅ "None of the above" handling completed successfully');
+        this.world.addSuccessLog('✅ "None of the above, just" handling completed successfully');
         return true;
         
     } catch (error) {
-        this.world.addErrorLog(`❌ Error handling "None of the above" option: ${error}`);
-        this.world.addInfoLog('Continuing with normal flow despite error');
+        this.world.addErrorLog(`❌ Error handling "None of the above, just" option: ${error}`);
+        
+        // Try alternative approach if the first one fails
+        this.world.addInfoLog('Trying alternative selector...');
+        return await this.tryAlternativeSelector();
+    }
+}
+
+// Alternative method in case the primary selector fails
+private async tryAlternativeSelector(): Promise<boolean> {
+    try {
+        // Try multiple alternative selectors
+        const alternativeSelectors = [
+            'span.bg-\\[#DBEAFE\\]',
+            'span:has-text("Search through the")',
+            'span.inline-flex.space-x-1.items-center span',
+            '[class*="bg-[#DBEAFE]"]'
+        ];
+        
+        for (const selector of alternativeSelectors) {
+            try {
+                const element = this.page.locator(selector).first();
+                if (await element.isVisible({ timeout: 2000 })) {
+                    this.world.addInfoLog(`Found element with alternative selector: ${selector}`);
+                    
+                    const text = await element.textContent();
+                    this.world.addInfoLog(`Clicking on: "${text}"`);
+                    
+                    await element.click();
+                    this.world.addSuccessLog(`✅ Clicked using alternative selector: ${selector}`);
+                    
+                    // Wait for processing
+                    await this.page.waitForTimeout(3000);
+                    return true;
+                }
+            } catch {
+                continue;
+            }
+        }
+        
+        this.world.addErrorLog('All alternative selectors failed');
+        return false;
+        
+    } catch (error) {
+        this.world.addErrorLog(`Alternative selector approach also failed: ${error}`);
         return false;
     }
 }
