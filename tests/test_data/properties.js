@@ -1,5 +1,5 @@
 module.exports = {
   testData: {
-    URL: "https://dev-creative-workspace.techo.camp/mode/BookGenieQA",
+    URL: "https://dev-creative-workspace.techo.camp/mode/BookGenieQA?newChat=true",
   }
 };
