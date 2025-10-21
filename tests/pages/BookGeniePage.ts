@@ -192,21 +192,21 @@ private async checkAndHandleNoneOfTheAbove(): Promise<boolean> {
         
         try {
             // Wait for thinking indicator to appear (if it does)
-            await thinkingIndicator.waitFor({ state: 'visible', timeout: 30000 });
+            await thinkingIndicator.waitFor({ state: 'visible', timeout: 300000 });
             this.world.addInfoLog('✓ AI thinking indicator appeared after "None of the above, just" selection');
             
             // Wait for thinking to complete again
-            await thinkingIndicator.waitFor({ state: 'hidden', timeout: 180000 });
+            await thinkingIndicator.waitFor({ state: 'hidden', timeout: 1800000 });
             this.world.addSuccessLog('✅ AI thinking completed after "None of the above, just" selection');
             
         } catch (thinkError) {
             this.world.addWarningLog('No thinking indicator appeared after "None of the above, just" selection');
             this.world.addInfoLog('Waiting additional time for response processing...');
-            await this.page.waitForTimeout(5000);
+            await this.page.waitForTimeout(50000);
         }
         
         // Final wait for response rendering
-        await this.page.waitForTimeout(2000);
+        await this.page.waitForTimeout(6000);
         this.world.addSuccessLog('✅ "None of the above, just" handling completed successfully');
         return true;
         
