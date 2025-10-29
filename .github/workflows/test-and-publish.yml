@@ -136,7 +136,7 @@ jobs:
           name: html-report-assets
           path: html-report
 
-            - name: Send Result Email
+      - name: Send Result Email
         uses: dawidd6/action-send-mail@v4
         with:
           server_address: smtp.gmail.com
