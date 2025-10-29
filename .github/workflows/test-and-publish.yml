@@ -5,8 +5,8 @@ on:
     branches: [main]
   pull_request:
   schedule:
-  - cron: '30 8 * * *'   # 2:00 PM IST = 08:30 UTC
-  - cron: '30 16 * * *'  # 10:00 PM IST = 16:30 UTC
+    - cron: '30 8 * * 1-5'   # 2:00 PM IST, Monday–Friday
+    - cron: '30 16 * * 1-5'  # 10:00 PM IST, Monday–Friday
 
 permissions:
   contents: write
@@ -21,7 +21,9 @@ jobs:
       skipped_count: ${{ steps.set_summary.outputs.skipped_count }}
       duration: ${{ steps.set_summary.outputs.duration }}
       features_tested: ${{ steps.set_summary.outputs.features_tested }}
-      steps_summary: ${{ steps.set_summary.outputs.steps_summary }}
+      scenarios_passed: ${{ steps.set_summary.outputs.scenarios_passed }}
+      scenarios_failed: ${{ steps.set_summary.outputs.scenarios_failed }}
+      feature_details: ${{ steps.set_summary.outputs.feature_details }}
 
     steps:
       - name: Checkout code
@@ -76,18 +78,26 @@ jobs:
         if: always()
         run: |
           summary=$(cat test-summary.json)
-
+          
           echo "passed_count=$(echo $summary | jq '.totalPassed')" >> $GITHUB_OUTPUT
           echo "failed_count=$(echo $summary | jq '.totalFailed')" >> $GITHUB_OUTPUT
           echo "skipped_count=$(echo $summary | jq '.totalSkipped')" >> $GITHUB_OUTPUT
-          echo "duration=Auto Extracted" >> $GITHUB_OUTPUT
-
-          echo 'features_tested<<EOF' >> $GITHUB_OUTPUT
-          echo $summary | jq -r '.features[] | "<li>" + .name + "</li>"' >> $GITHUB_OUTPUT
+          echo "scenarios_passed=$(echo $summary | jq '.scenariosPassed')" >> $GITHUB_OUTPUT
+          echo "scenarios_failed=$(echo $summary | jq '.scenariosFailed')" >> $GITHUB_OUTPUT
+          
+          # Pass duration as JSON string
+          echo 'duration<<EOF' >> $GITHUB_OUTPUT
+          echo '{"totalDuration": "'$(echo $summary | jq -r '.totalDuration')'", "executionTime": "'$(echo $summary | jq -r '.executionTime')'"}' >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
-          echo 'steps_summary<<EOF' >> $GITHUB_OUTPUT
-          echo $summary | jq -r '.features[].steps[] | select(.stepName != null) | "- " + .stepName + " (" + .status + ")"' >> $GITHUB_OUTPUT
+          # Pass features as simple list
+          echo 'features_tested<<EOF' >> $GITHUB_OUTPUT
+          echo $summary | jq -r '.features[] | .name' >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+          # Pass feature details as formatted HTML
+          echo 'feature_details<<EOF' >> $GITHUB_OUTPUT
+          echo $summary | jq -r '.features[] | "<div class=\"feature-card\"><h4>" + .name + "</h4><p><strong>Scenarios:</strong> " + (.scenariosPassed|tostring) + " passed, " + (.scenariosFailed|tostring) + " failed</p><p><strong>Steps:</strong> " + (.passed|tostring) + " passed, " + (.failed|tostring) + " failed, " + (.skipped|tostring) + " skipped</p><p><strong>Duration:</strong> " + .featureDuration + "</p></div>"' >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Set Job Status
@@ -126,7 +136,7 @@ jobs:
           name: html-report-assets
           path: html-report
 
-      - name: Send Result Email
+            - name: Send Result Email
         uses: dawidd6/action-send-mail@v4
         with:
           server_address: smtp.gmail.com
@@ -134,48 +144,93 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: |
-            🧪 Test Report - ${{ github.repository }} - Status: ${{ needs.test.outputs.test_status }}
+            📊 Cucumber Test Report - ${{ github.repository }} - ${{ needs.test.outputs.test_status }}
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub CI <${{ secrets.EMAIL_USERNAME }}>
           html_body: |
-            <p>Hello Team,</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+                .summary-card { background: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 15px 0; border-radius: 5px; }
+                .summary-card.failed { border-left-color: #dc3545; }
+                .feature-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
+                .stat-box { text-align: center; padding: 15px; border-radius: 8px; color: white; }
+                .stat-passed { background: #28a745; }
+                .stat-failed { background: #dc3545; }
+                .stat-skipped { background: #ffc107; color: #333; }
+                .stat-duration { background: #17a2b8; }
+                .commit-info { background: #f1f3f4; padding: 10px; border-radius: 5px; margin: 10px 0; }
+                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>📊 Cucumber Test Report</h1>
+                <h2>HC x Epub : Data Ingest</h2>
+              </div>
 
-            <p>A new test run has been completed for <code>${{ github.repository }}</code>.</p>
+              <div class="commit-info">
+                <strong>Repository:</strong> ${{ github.repository }}<br>
+                <strong>Triggered By:</strong> ${{ github.actor }}<br>
+                <strong>Commit SHA:</strong> <code>${{ github.sha }}</code><br>
+                <strong>Branch:</strong> ${{ github.ref_name }}<br>
+                <strong>Execution Time:</strong> ${{ fromJSON(needs.test.outputs.duration).executionTime }}
+              </div>
 
-            <ul>
-              <li><strong>Status:</strong> <span style="color:green;"><strong>${{ needs.test.outputs.test_status }}</strong></span></li>
-              <li><strong>Triggered By:</strong> <code>${{ github.actor }}</code></li>
-              <li><strong>Commit Message:</strong> <code>${{ github.event.head_commit.message }}</code></li>
-              <li><strong>Commit SHA:</strong> <code>${{ github.sha }}</code></li>
-            </ul>
+              <div class="stats-grid">
+                <div class="stat-box stat-passed">
+                  <div style="font-size: 24px; font-weight: bold;">${{ needs.test.outputs.passed_count }}</div>
+                  <div>Steps Passed</div>
+                </div>
+                <div class="stat-box stat-failed">
+                  <div style="font-size: 24px; font-weight: bold;">${{ needs.test.outputs.failed_count }}</div>
+                  <div>Steps Failed</div>
+                </div>
+                <div class="stat-box stat-skipped">
+                  <div style="font-size: 24px; font-weight: bold;">${{ needs.test.outputs.skipped_count }}</div>
+                  <div>Steps Skipped</div>
+                </div>
+                <div class="stat-box stat-duration">
+                  <div style="font-size: 24px; font-weight: bold;">${{ fromJSON(needs.test.outputs.duration).totalDuration }}</div>
+                  <div>Total Duration</div>
+                </div>
+              </div>
 
-            <h3>📂 Features Covered:</h3>
-            <ul>
-            ${{ needs.test.outputs.features_tested }}
-            </ul>
+              <div class="summary-card ${{ needs.test.outputs.test_status == 'success' ? '' : 'failed' }}">
+                <h3>Overall Status: 
+                  <span style="color: ${{ needs.test.outputs.test_status == 'success' ? '#28a745' : '#dc3545' }}; font-weight: bold;">
+                    ${{ needs.test.outputs.test_status == 'success' ? '✅ SUCCESS' : '❌ FAILED' }}
+                  </span>
+                </h3>
+                <p><strong>Scenarios:</strong> ${{ needs.test.outputs.scenarios_passed }} passed, ${{ needs.test.outputs.scenarios_failed }} failed</p>
+                <p><strong>Steps:</strong> ${{ needs.test.outputs.passed_count }} passed, ${{ needs.test.outputs.failed_count }} failed, ${{ needs.test.outputs.skipped_count }} skipped</p>
+              </div>
 
-            <h3>📋 Step Summary:</h3>
-            <pre>${{ needs.test.outputs.steps_summary }}</pre>
+              <h3>📋 Features Tested</h3>
+              
+              ${{ needs.test.outputs.feature_details }}
 
-            <h3>📊 Test Summary:</h3>
-            <ul>
-              <li>✅ Passed: <strong>${{ needs.test.outputs.passed_count }}</strong></li>
-              <li>❌ Failed: <strong>${{ needs.test.outputs.failed_count }}</strong></li>
-              <li>⏸ Skipped: <strong>${{ needs.test.outputs.skipped_count }}</strong></li>
-              <li>⏱ Duration: <strong>${{ needs.test.outputs.duration }}</strong></li>
-            </ul>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" 
+                   style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                  📊 View Detailed HTML Report
+                </a>
+              </div>
 
-            <p><strong>📎 Test Report:</strong><br>
-            <a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/">Click to view HTML report</a>
-            </p>
-
-            <p><strong>🖼 Screenshot Attached</strong> (if generated successfully).</p>
-            <hr>
-
-            <p>👀 Please review the report and logs for failed scenarios, if any.<br>
-            🔄 Rerun the workflow after applying fixes if required.</p>
-
-            <p>Regards,<br>
-            <strong>GitHub CI Bot</strong><br>
-            <em>Techolution QA Automation</em></p>
+              <div class="footer">
+                <p><strong>📎 Attachments:</strong> HTML Report Screenshot</p>
+                <p><strong>👀 Next Steps:</strong> Please review the detailed report for failed scenarios and check logs for any issues.</p>
+                <p><strong>🔄 Rerun:</strong> If needed, rerun the workflow after applying fixes.</p>
+                <hr>
+                <p><em>Best regards,<br>
+                <strong>GitHub CI Bot</strong><br>
+                Techolution QA Automation</em></p>
+              </div>
+            </body>
+            </html>
           attachments: ./html-report/report-screenshot.png

@@ -49,9 +49,10 @@ export class BookGeniePage {
         await this.page.getByText(mode).waitFor({ state: 'visible' });
         await this.page.getByText(mode).click();
         this.world.addSuccessLog(`Mode "${mode}" selected successfully`);
-        
         await this.page.waitForTimeout(2000);
         this.world.addInfoLog('Waiting for mode transition to complete');
+        await this.page.locator(locators.newChat).click();
+        await this.page.waitForTimeout(2000);
     }
 
     async typeQuery(query: string) {
@@ -85,7 +86,7 @@ export class BookGeniePage {
         this.world.addHeaderLog('WAITING FOR AI RESPONSE');
         this.world.addInfoLog('Looking for AI thinking indicator...');
         
-        const thinkingIndicator = this.page.getByText('Creative Workspace AI is thinking', { exact: false });
+        const thinkingIndicator = this.page.getByText('AskMod.AI is thinking', { exact: false });
         
         try {
             this.world.addInfoLog('Waiting for thinking indicator to appear (max 2 minutes)');
@@ -123,14 +124,13 @@ export class BookGeniePage {
         
         this.world.addSuccessLog('AI response wait process completed');
     }
-    // ENHANCED VERSION with better error handling and logging
-// UPDATED METHOD: Check and handle "None of the above, just" option with sibling span
+
 private async checkAndHandleNoneOfTheAbove(): Promise<boolean> {
     try {
         this.world.addInfoLog('🔍 Checking for "None of the above, just" option...');
         
         // Define the locator for "None of the above, just" text
-        const noneOfTheAboveText = this.page.locator('p:has-text("None of the above, just")');
+        const noneOfTheAboveText = this.page.locator("//p[normalize-space(text())='None of the above, just']");
         
         // Check if the element exists and is visible
         const isVisible = await noneOfTheAboveText.isVisible().catch(() => false);
@@ -144,7 +144,7 @@ private async checkAndHandleNoneOfTheAbove(): Promise<boolean> {
         
         // Find the sibling span that contains the clickable element
         // The span is a sibling of the <p> element that contains "None of the above, just"
-        const clickableSpan = this.page.locator('p:has-text("None of the above, just") + span span.bg-\\[#DBEAFE\\]');
+        const clickableSpan = this.page.locator("//p[normalize-space(text())='None of the above, just']/following-sibling::span");
         
         // Alternative selectors if the above doesn't work:
         // const clickableSpan = this.page.locator('span.bg-\\[#DBEAFE\\]:has-text("Search through the")');
@@ -170,25 +170,10 @@ private async checkAndHandleNoneOfTheAbove(): Promise<boolean> {
         await clickableSpan.click();
         this.world.addSuccessLog('✅ Clicked on "None of the above, just" option span');
         
-        // Wait for the elements to disappear after clicking
-        try {
-            await noneOfTheAboveText.waitFor({ state: 'hidden', timeout: 10000 });
-            this.world.addInfoLog('✓ "None of the above, just" text disappeared after click');
-        } catch {
-            this.world.addWarningLog('"None of the above, just" text still visible after click');
-        }
-        
-        try {
-            await clickableSpan.waitFor({ state: 'hidden', timeout: 10000 });
-            this.world.addInfoLog('✓ Clickable span disappeared after click');
-        } catch {
-            this.world.addWarningLog('Clickable span still visible after click');
-        }
-        
         // Wait for AI to process the selection - check for thinking indicator
         this.world.addInfoLog('⏳ Waiting for AI to process "None of the above, just" selection...');
         
-        const thinkingIndicator = this.page.getByText('Creative Workspace AI is thinking', { exact: false });
+        const thinkingIndicator = this.page.getByText('AskMod.AI is thinking', { exact: false });
         
         try {
             // Wait for thinking indicator to appear (if it does)
@@ -202,7 +187,7 @@ private async checkAndHandleNoneOfTheAbove(): Promise<boolean> {
         } catch (thinkError) {
             this.world.addWarningLog('No thinking indicator appeared after "None of the above, just" selection');
             this.world.addInfoLog('Waiting additional time for response processing...');
-            await this.page.waitForTimeout(50000);
+            await this.page.waitForTimeout(5000);
         }
         
         // Final wait for response rendering
