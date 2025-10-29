@@ -379,7 +379,7 @@ jobs:
                 </div>
               </div>
 
-              <div class="stats-grid">
+              <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; justify-content: space-around; align-content: center;">
                 <div class="stat-box stat-passed">
                   <div style="font-size: 24px; font-weight: bold;">${{ needs.test.outputs.passed_count }}</div>
                   <div>Steps Passed</div>

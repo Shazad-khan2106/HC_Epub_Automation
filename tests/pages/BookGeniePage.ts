@@ -47,7 +47,7 @@ export class BookGeniePage {
     async selectMode(mode: string) {
         this.world.addInfoLog(`Selecting mode: ${mode}`);
         await this.page.getByText(mode).waitFor({ state: 'visible' });
-        await this.page.getByText(mode).click();
+        await this.page.locator(locators.bookGenieMode).click();
         this.world.addSuccessLog(`Mode "${mode}" selected successfully`);
         await this.page.waitForTimeout(2000);
         this.world.addInfoLog('Waiting for mode transition to complete');
