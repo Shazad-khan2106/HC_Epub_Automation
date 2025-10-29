@@ -393,7 +393,7 @@ jobs:
                   <div>Steps Skipped</div>
                 </div>
                 <div class="stat-box stat-duration">
-                  <div style="font-size: 24px; font-weight: bold;">${{ fromJSON(needs.test.outputs.duration).totalDuration }}</div>
+                  <div style="font-size: 24px; font-weight: bold;">${{ fromJSON(needs.test.outputs.duration).executionTime }}</div>
                   <div>Total Duration</div>
                 </div>
               </div>
