@@ -174,61 +174,29 @@ jobs:
                 .summary-card { background: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 15px 0; border-radius: 5px; }
                 .summary-card.failed { border-left-color: #dc3545; }
                 .feature-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                .info-box { 
-                  background: #f1f3f4; 
-                  padding: 20px; 
-                  border-radius: 8px; 
-                  height: 100%;
-                  box-sizing: border-box;
-                }
-                .scenario-box { 
-                  background: #e8f4fd; 
-                  padding: 20px; 
-                  border-radius: 8px; 
-                  height: 100%;
-                  box-sizing: border-box;
-                }
+                .commit-info { background: #f1f3f4; padding: 20px; border-radius: 8px; height: 100%; box-sizing: border-box; }
+                .scenario-summary { background: #e8f4fd; padding: 20px 20px 40px 20px; border-radius: 8px;height: 120%; box-sizing: border-box; }
                 .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; }
-                .stat-box { 
-                  text-align: center; 
-                  padding: 25px 10px; 
-                  border-radius: 8px; 
-                  color: white;
-                  min-height: 100px;
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: center;
-                  align-items: center;
-                }
+                .stat-box { text-align: center; padding: 20px 10px; border-radius: 8px; color: white; }
                 .stat-passed { background: #28a745; }
                 .stat-failed { background: #dc3545; }
                 .stat-skipped { background: #ffc107; color: #333; }
                 .stat-duration { background: #17a2b8; }
-                .stat-number { 
-                  font-size: 32px; 
-                  font-weight: bold; 
-                  margin-bottom: 8px;
-                  line-height: 1;
-                }
-                .stat-label { 
-                  font-size: 14px;
-                  line-height: 1.2;
-                  font-weight: bold;
-                }
-                h3 { margin-top: 0; }
+                .stat-number { font-size: 28px; font-weight: bold; margin-bottom: 5px; line-height: 1; }
+                .stat-label { font-size: 14px; line-height: 1.2; }
               </style>
             </head>
             <body>
               <div class="header">
-                <h1>📊 Cucumber Test Report</h1>
-                <h2>HC x Epub : Data Ingest</h2>
+                <h1>📊 Epub Automation Test Report</h1>
+                <h2>HC Epub</h2>
               </div>
 
-              <!-- Execution Summary Table with Equal Heights -->
-              <table width="100%" cellpadding="0" cellspacing="15" border="0" style="margin: 20px 0;">
+              <!-- Execution Summary Table -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
                 <tr>
                   <td width="50%" valign="top">
-                    <div class="info-box">
+                    <div class="commit-info">
                       <h3>📝 Execution Details</h3>
                       <strong>Repository:</strong> ${{ github.repository }}<br>
                       <strong>Triggered By:</strong> ${{ github.actor }}<br>
@@ -238,7 +206,7 @@ jobs:
                     </div>
                   </td>
                   <td width="50%" valign="top">
-                    <div class="scenario-box">
+                    <div class="scenario-summary">
                       <h3>📈 Scenario Summary</h3>
                       <strong>Total Scenarios:</strong> ${{ needs.test.outputs.total_scenarios }}<br>
                       <strong>Passed:</strong> ${{ needs.test.outputs.scenarios_passed }}<br>
@@ -249,38 +217,37 @@ jobs:
                 </tr>
               </table>
 
-              <!-- Stats Grid Table - Side by side -->
-              <table width="100%" cellpadding="0" cellspacing="15" border="0" style="margin: 30px 0;">
+              <!-- Stats Grid Table - FIXED: Side by side using table -->
+              <table width="100%" cellpadding="0" cellspacing="15" border="0" style="margin: 20px 0;">
                 <tr>
-                  <td width="25%" valign="middle">
+                  <td width="25%" valign="top">
                     <div class="stat-box stat-passed">
                       <div class="stat-number">${{ needs.test.outputs.passed_count }}</div>
-                      <div class="stat-label">STEPS PASSED</div>
+                      <div class="stat-label">Steps Passed</div>
                     </div>
                   </td>
-                  <td width="25%" valign="middle">
+                  <td width="25%" valign="top">
                     <div class="stat-box stat-failed">
                       <div class="stat-number">${{ needs.test.outputs.failed_count }}</div>
-                      <div class="stat-label">STEPS FAILED</div>
+                      <div class="stat-label">Steps Failed</div>
                     </div>
                   </td>
-                  <td width="25%" valign="middle">
+                  <td width="25%" valign="top">
                     <div class="stat-box stat-skipped">
                       <div class="stat-number">${{ needs.test.outputs.skipped_count }}</div>
-                      <div class="stat-label">STEPS SKIPPED</div>
+                      <div class="stat-label">Steps Skipped</div>
                     </div>
                   </td>
-                  <td width="25%" valign="middle">
+                  <td width="25%" valign="top">
                     <div class="stat-box stat-duration">
                       <div class="stat-number">${{ fromJSON(needs.test.outputs.duration).totalDuration }}</div>
-                      <div class="stat-label">TOTAL DURATION</div>
+                      <div class="stat-label">Total Duration</div>
                     </div>
                   </td>
                 </tr>
               </table>
 
-              <!-- Overall Status Card -->
-              <div class="summary-card ${{ needs.test.outputs.test_status == 'success' && '' || 'failed' }}" style="margin: 25px 0;">
+              <div class="summary-card ${{ needs.test.outputs.test_status == 'success' && '' || 'failed' }}">
                 <h3>Overall Status: 
                   ${{ needs.test.outputs.test_status == 'success' && '<span style="color: #28a745; font-weight: bold;">✅ SUCCESS</span>' || '<span style="color: #dc3545; font-weight: bold;">❌ FAILED</span>' }}
                 </h3>
@@ -288,13 +255,13 @@ jobs:
                 <p><strong>Steps:</strong> ${{ needs.test.outputs.passed_count }} passed, ${{ needs.test.outputs.failed_count }} failed, ${{ needs.test.outputs.skipped_count }} skipped</p>
               </div>
 
-              <h3 style="margin: 30px 0 15px 0;">📋 Features Tested</h3>
+              <h3>📋 Features Tested</h3>
               
               ${{ needs.test.outputs.feature_details }}
 
-              <div style="text-align: center; margin: 40px 0;">
+              <div style="text-align: center; margin: 30px 0;">
                 <a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" 
-                   style="background: #007bff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">
+                   style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                   📊 View Detailed HTML Report
                 </a>
               </div>
@@ -303,7 +270,7 @@ jobs:
                 <p><strong>📎 Attachments:</strong> HTML Report Screenshot</p>
                 <p><strong>👀 Next Steps:</strong> Please review the detailed report for failed scenarios and check logs for any issues.</p>
                 <p><strong>🔄 Rerun:</strong> If needed, rerun the workflow after applying fixes.</p>
-                <hr style="margin: 20px 0;">
+                <hr>
                 <p><em>Best regards,<br>
                 <strong>GitHub CI Bot</strong><br>
                 Techolution QA Automation</em></p>
