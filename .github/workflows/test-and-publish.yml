@@ -23,6 +23,8 @@ jobs:
       features_tested: ${{ steps.set_summary.outputs.features_tested }}
       scenarios_passed: ${{ steps.set_summary.outputs.scenarios_passed }}
       scenarios_failed: ${{ steps.set_summary.outputs.scenarios_failed }}
+      total_scenarios: ${{ steps.set_summary.outputs.total_scenarios }}
+      success_rate: ${{ steps.set_summary.outputs.success_rate }}
       feature_details: ${{ steps.set_summary.outputs.feature_details }}
 
     steps:
@@ -84,6 +86,20 @@ jobs:
           echo "skipped_count=$(echo $summary | jq '.totalSkipped')" >> $GITHUB_OUTPUT
           echo "scenarios_passed=$(echo $summary | jq '.scenariosPassed')" >> $GITHUB_OUTPUT
           echo "scenarios_failed=$(echo $summary | jq '.scenariosFailed')" >> $GITHUB_OUTPUT
+          
+          # Calculate total scenarios and success rate
+          scenarios_passed=$(echo $summary | jq '.scenariosPassed')
+          scenarios_failed=$(echo $summary | jq '.scenariosFailed')
+          total_scenarios=$((scenarios_passed + scenarios_failed))
+          
+          if [ $total_scenarios -gt 0 ]; then
+            success_rate=$((scenarios_passed * 100 / total_scenarios))
+          else
+            success_rate=0
+          fi
+          
+          echo "total_scenarios=$total_scenarios" >> $GITHUB_OUTPUT
+          echo "success_rate=$success_rate" >> $GITHUB_OUTPUT
           
           # Pass duration as JSON string
           echo 'duration<<EOF' >> $GITHUB_OUTPUT
@@ -209,10 +225,10 @@ jobs:
 
                 <div class="scenario-summary">
                   <h3>📈 Scenario Summary</h3>
-                  <strong>Total Scenarios:</strong> ${{ needs.test.outputs.scenarios_passed + needs.test.outputs.scenarios_failed }}<br>
+                  <strong>Total Scenarios:</strong> ${{ needs.test.outputs.total_scenarios }}<br>
                   <strong>Passed:</strong> ${{ needs.test.outputs.scenarios_passed }}<br>
                   <strong>Failed:</strong> ${{ needs.test.outputs.scenarios_failed }}<br>
-                  <strong>Success Rate:</strong> ${{ math.div(needs.test.outputs.scenarios_passed, needs.test.outputs.scenarios_passed + needs.test.outputs.scenarios_failed) * 100 }}%
+                  <strong>Success Rate:</strong> ${{ needs.test.outputs.success_rate }}%
                 </div>
               </div>
 
