@@ -4,6 +4,8 @@ import { HomePage } from '../tests/pages/HomePage';
 import { BookGeniePage } from '../tests/pages/BookGeniePage'
 import { Expect } from 'playwright/test';
 import { BookData } from '../tests/utils/bookExtractor'; // Add this import
+import { CardContentData } from '../tests/utils/CardContentExtractor';
+
 
 export class CustomWorld extends World {
     browser!: Browser;
@@ -12,7 +14,12 @@ export class CustomWorld extends World {
     homePage!: HomePage;
     bookGeniePage!: BookGeniePage;
     logs: string[] = [];
-    expect!: Expect;
+    expect!: Expect;   
+    extractedCardContent?: CardContentData;
+    expectedCardContent?: CardContentData;
+    allCardContents?: CardContentData[];
+    cardValidationResult?: any;
+    
     
     // Add these properties
     extractedBooks?: BookData[];
@@ -25,7 +32,9 @@ export class CustomWorld extends World {
         invalidBooks: string[];
         databaseInfo: { path: string; bookCount: number };
     };
-  
+    
+    
+    
   addLog(message: string) {
     const timestamp = new Date().toLocaleTimeString();
     const logMessage = `[${timestamp}] ${message}`;

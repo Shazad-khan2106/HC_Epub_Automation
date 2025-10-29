@@ -9,7 +9,7 @@ setDefaultTimeout(600 * 10000);
 
 Before(async function (this: CustomWorld) {
   this.browser = await chromium.launch({ 
-    headless: true,
+    headless: false,
     args: [
         `--window-size=1980,1080` // set browser window size
       ], 

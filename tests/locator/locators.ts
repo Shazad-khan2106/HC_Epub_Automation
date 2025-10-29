@@ -3,6 +3,7 @@ export const locators = {
     modeSelectionDropdown: '[data-pc-name="dropdown"]',
     bookGenieMode: '[aria-label="BookGenieQA"]',
     chatInput: '[placeholder="How can I help?"]',
+    newChat:'button[data-pr-tooltip="New Chat"]',
     chatResponse: '[class="max-w-[90%] text-[1rem] flex flex-col gap-y-2 w-[90%]  text-[#344054] rounded-r-[8px] rounded-bl-[8px]"]',
     // citation locators 
     mainBookSection: 'details.accordion:has(summary:has-text("Books by Award-Winning Authors"))',

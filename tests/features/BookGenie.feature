@@ -20,6 +20,14 @@ Scenario Outline: Book Genie Response Validation with Citation Verification
     And database should contain 10032 books
     And I validate extracted books individually against database
     And I validate BookGenie response relevance with AI for query "<query>"
+    Then I should see book cards
+    And I extract detailed content from the book card
+    And I extract expected data from the left-side chat panel
+    And I validate book titles of all cards against chat data
+    And I validate authors of all cards against chat data
+    And I validate relevance scores of all cards against chat data
+    And I validate why match reasons of all cards against chat data
+    And I validate all card contents comprehensively against chat data
     
     Examples:
         | query                                      |

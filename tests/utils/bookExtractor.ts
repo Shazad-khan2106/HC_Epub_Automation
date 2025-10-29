@@ -1,6 +1,9 @@
 export interface BookData {
     question: string;
     bookTitle: string;
+    author: string;
+    publishingDate: string;
+    imprint: string;
     whyMatch: string;
     relevanceScore: string;
     gap: string;
@@ -41,6 +44,9 @@ export class BookExtractor {
                 const bookData: BookData = {
                     question,
                     bookTitle,
+                    author: this.extractAuthor(section),
+                    publishingDate: this.extractPublishingDate(section),
+                    imprint: this.extractImprint(section),
                     whyMatch: reasonsData.map(r => r.reason).join(' | '),
                     relevanceScore: this.extractRelevanceScore(section),
                     gap: this.extractGap(section) || 'No gap mentioned',
@@ -60,62 +66,102 @@ export class BookExtractor {
         return books;
     }
 
-     private static extractReasonsWithCitations(section: string): { reason: string; highlightedText: string }[] {
-        const reasons: { reason: string; highlightedText: string }[] = [];
+    private static extractAuthor(section: string): string {
+        // Extract author from the pattern: <p class="py-2 font-bold inline-flex gap-1">Author:</p> Rachel Campos-Duffy and Sean Duffy
+        const authorMatch = section.match(/Author:.*?<\/p>\s*([^<]+)/);
+        const author = authorMatch ? authorMatch[1].trim() : '';
         
-        this.log('Extracting reasons with citations from section');
-
-        const whyStart = section.indexOf('Why this book is the');
-        if (whyStart === -1) {
-            this.log('No "Why this book is the match" section found');
-            return reasons;
+        if (author) {
+            this.log(`Extracted author: "${author}"`);
+        } else {
+            this.log('No author found in section');
         }
-
-        const whyEnd = section.indexOf('</ol>', whyStart);
-        if (whyEnd === -1) {
-            this.log('No closing </ol> tag found for reasons section');
-            return reasons;
-        }
-
-        const whySection = section.substring(whyStart, whyEnd);
-        this.log(`Why section length: ${whySection.length} characters`);
-
-        // Extract all list items - FIXED: removed 's' flag since we're not using dotAll
-        const liMatches = [...whySection.matchAll(/<li>(.*?)<\/li>/gi)];
         
-        for (let i = 0; i < liMatches.length; i++) {
-            const liContent = liMatches[i][1];
-            let reasonText = '';
-            let highlightedText = '';
+        return author;
+    }
 
-            // Check if highlighted text exists (condition 1a) - FIXED: removed 'g' flag since we want first match
-            const highlightMatch = liContent.match(/<span[^>]*text-\[\#d63384\][^>]*>([^<]*)<\/span>/);
-            if (highlightMatch && highlightMatch.length > 0) {
-                // Extract just the highlighted word
-                const cleanHighlight = highlightMatch[1].trim();
-                reasonText = cleanHighlight;
-                highlightedText = cleanHighlight;
-                this.log(`Extracted highlighted text: "${cleanHighlight}"`);
-            } else {
-                // Condition 1b: Extract text until first "(" character
-                const textUntilBracket = liContent.split('(')[0].trim();
-                const cleanText = textUntilBracket.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-                reasonText = cleanText;
-                highlightedText = `Full_Reason_${i + 1}`;
-                this.log(`Extracted text until bracket: "${cleanText.substring(0, 50)}..."`);
-            }
-
-            if (reasonText) {
-                reasons.push({
-                    reason: reasonText,
-                    highlightedText: highlightedText
-                });
-            }
+    private static extractPublishingDate(section: string): string {
+        // Extract publishing date from the pattern: <p class="py-2 font-bold inline-flex gap-1">Publishing Date:</p> NOV-16-2021
+        const dateMatch = section.match(/Publishing Date:.*?<\/p>\s*([^<]+)/);
+        const publishingDate = dateMatch ? dateMatch[1].trim() : '';
+        
+        if (publishingDate) {
+            this.log(`Extracted publishing date: "${publishingDate}"`);
+        } else {
+            this.log('No publishing date found in section');
         }
+        
+        return publishingDate;
+    }
 
-        this.log(`Total reasons extracted: ${reasons.length}`);
+    private static extractImprint(section: string): string {
+        // Extract imprint from the pattern: <p class="py-2 font-bold inline-flex gap-1">Imprint:</p> Broadside e-books
+        const imprintMatch = section.match(/Imprint:.*?<\/p>\s*([^<]+)/);
+        const imprint = imprintMatch ? imprintMatch[1].trim() : '';
+        
+        if (imprint) {
+            this.log(`Extracted imprint: "${imprint}"`);
+        } else {
+            this.log('No imprint found in section');
+        }
+        
+        return imprint;
+    }
+
+  private static extractReasonsWithCitations(section: string): { reason: string; highlightedText: string }[] {
+    const reasons: { reason: string; highlightedText: string }[] = [];
+    
+    this.log('Extracting reasons with citations from section');
+
+    const whyStart = section.indexOf('Why this book is the');
+    if (whyStart === -1) {
+        this.log('No "Why this book is the match" section found');
         return reasons;
-    } 
+    }
+
+    const whyEnd = section.indexOf('</ol>', whyStart);
+    if (whyEnd === -1) {
+        this.log('No closing </ol> tag found for reasons section');
+        return reasons;
+    }
+
+    const whySection = section.substring(whyStart, whyEnd);
+    this.log(`Why section length: ${whySection.length} characters`);
+
+    // Extract all list items
+    const liMatches = [...whySection.matchAll(/<li>([\s\S]*?)<\/li>/gi)];
+    
+    for (let i = 0; i < liMatches.length; i++) {
+        const liContent = liMatches[i][1];
+        let reasonText = '';
+        let highlightedText = '';
+
+        // FIRST: Extract the complete reason text (everything before the first parenthesis)
+        const textUntilBracket = liContent.split('(')[0].trim();
+        let completeReason = textUntilBracket.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        
+        // SECOND: Extract highlighted text separately
+        const highlightMatch = liContent.match(/<span[^>]*text-\[\#d63384\][^>]*>.*?<p[^>]*>([^<]*)<\/p><\/span>/);
+        if (highlightMatch && highlightMatch[1]) {
+            highlightedText = highlightMatch[1].trim();
+            this.log(`Extracted highlighted text: "${highlightedText}"`);
+        }
+
+        // Use the complete reason text, not just the highlighted part
+        reasonText = completeReason;
+        
+        if (reasonText && reasonText.length > 10) { // Only add if it's meaningful text
+            reasons.push({
+                reason: reasonText,
+                highlightedText: highlightedText
+            });
+            this.log(`Extracted complete reason ${i + 1}: "${reasonText.substring(0, 80)}..."`);
+        }
+    }
+
+    this.log(`Total reasons extracted: ${reasons.length}`);
+    return reasons;
+}
 
     private static splitBookSections(htmlContent: string): string[] {
         const sections: string[] = [];
