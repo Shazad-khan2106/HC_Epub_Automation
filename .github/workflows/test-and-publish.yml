@@ -125,7 +125,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site/html-report
 
-    notify:
+  notify:
     needs: [test, deploy]
     if: always()
     runs-on: ubuntu-22.04
