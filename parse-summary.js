@@ -78,11 +78,13 @@ report.forEach(feature => {
 });
 
 // Calculate total duration
-if (report.length > 0) {
-  const firstFeatureStart = new Date(report[0].elements?.[0]?.start_timestamp);
+if (report.length > 0 && report[0].elements && report[0].elements.length > 0) {
+  const firstFeatureStart = new Date(report[0].elements[0].start_timestamp);
   const lastFeatureEnd = new Date();
   const totalDurationMs = lastFeatureEnd - firstFeatureStart;
   summary.totalDuration = formatDuration(totalDurationMs);
+} else {
+  summary.totalDuration = "0s";
 }
 
 function formatDuration(ms) {

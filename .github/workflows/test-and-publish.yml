@@ -174,66 +174,16 @@ jobs:
                 .summary-card { background: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 15px 0; border-radius: 5px; }
                 .summary-card.failed { border-left-color: #dc3545; }
                 .feature-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                .feature-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-top: 10px; }
-                .stat-item { padding: 5px 0; }
-                .stats-grid { 
-                  display: grid; 
-                  grid-template-columns: repeat(4, 1fr); 
-                  gap: 15px; 
-                  margin: 20px 0;
-                }
-                .stat-box { 
-                  text-align: center; 
-                  padding: 20px 10px; 
-                  border-radius: 8px; 
-                  color: white;
-                  min-height: 80px;
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: center;
-                  align-items: center;
-                }
+                .commit-info { background: #f1f3f4; padding: 15px; border-radius: 5px; margin: 10px 0; }
+                .scenario-summary { background: #e8f4fd; padding: 15px; border-radius: 5px; margin: 10px 0; }
+                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; }
+                .stat-box { text-align: center; padding: 20px 10px; border-radius: 8px; color: white; }
                 .stat-passed { background: #28a745; }
                 .stat-failed { background: #dc3545; }
                 .stat-skipped { background: #ffc107; color: #333; }
                 .stat-duration { background: #17a2b8; }
-                .execution-summary-grid { 
-                  display: grid; 
-                  grid-template-columns: 1fr 1fr; 
-                  gap: 20px; 
-                  margin: 20px 0;
-                }
-                .commit-info { 
-                  background: #f1f3f4; 
-                  padding: 15px; 
-                  border-radius: 5px; 
-                  margin: 10px 0; 
-                }
-                .scenario-summary { 
-                  background: #e8f4fd; 
-                  padding: 15px; 
-                  border-radius: 5px; 
-                  margin: 10px 0;
-                }
-                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; }
-                .stat-number { 
-                  font-size: 28px; 
-                  font-weight: bold; 
-                  margin-bottom: 5px;
-                  line-height: 1;
-                }
-                .stat-label { 
-                  font-size: 14px;
-                  line-height: 1.2;
-                }
-                @media (max-width: 768px) {
-                  .execution-summary-grid { grid-template-columns: 1fr; }
-                  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-                  .feature-stats-grid { grid-template-columns: 1fr; }
-                }
-                @media (max-width: 480px) {
-                  .stats-grid { grid-template-columns: 1fr; }
-                }
+                .stat-number { font-size: 28px; font-weight: bold; margin-bottom: 5px; line-height: 1; }
+                .stat-label { font-size: 14px; line-height: 1.2; }
               </style>
             </head>
             <body>
@@ -242,161 +192,60 @@ jobs:
                 <h2>HC x Epub : Data Ingest</h2>
               </div>
 
-              <div class="execution-summary-grid">
-                <div class="commit-info">
-                  <h3>📝 Execution Details</h3>
-                  <strong>Repository:</strong> ${{ github.repository }}<br>
-                  <strong>Triggered By:</strong> ${{ github.actor }}<br>
-                  <strong>Commit SHA:</strong> <code>${{ github.sha }}</code><br>
-                  <strong>Branch:</strong> ${{ github.ref_name }}<br>
-                  <strong>Execution Time:</strong> ${{ fromJSON(needs.test.outputs.duration).executionTime }}
-                </div>
+              <!-- Execution Summary Table -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+                <tr>
+                  <td width="50%" valign="top">
+                    <div class="commit-info">
+                      <h3>📝 Execution Details</h3>
+                      <strong>Repository:</strong> ${{ github.repository }}<br>
+                      <strong>Triggered By:</strong> ${{ github.actor }}<br>
+                      <strong>Commit SHA:</strong> <code>${{ github.sha }}</code><br>
+                      <strong>Branch:</strong> ${{ github.ref_name }}<br>
+                      <strong>Execution Time:</strong> ${{ fromJSON(needs.test.outputs.duration).executionTime }}
+                    </div>
+                  </td>
+                  <td width="50%" valign="top">
+                    <div class="scenario-summary">
+                      <h3>📈 Scenario Summary</h3>
+                      <strong>Total Scenarios:</strong> ${{ needs.test.outputs.total_scenarios }}<br>
+                      <strong>Passed:</strong> ${{ needs.test.outputs.scenarios_passed }}<br>
+                      <strong>Failed:</strong> ${{ needs.test.outputs.scenarios_failed }}<br>
+                      <strong>Success Rate:</strong> ${{ needs.test.outputs.success_rate }}%
+                    </div>
+                  </td>
+                </tr>
+              </table>
 
-                <div class="scenario-summary">
-                  <h3>📈 Scenario Summary</h3>
-                  <strong>Total Scenarios:</strong> ${{ needs.test.outputs.total_scenarios }}<br>
-                  <strong>Passed:</strong> ${{ needs.test.outputs.scenarios_passed }}<br>
-                  <strong>Failed:</strong> ${{ needs.test.outputs.scenarios_failed }}<br>
-                  <strong>Success Rate:</strong> ${{ needs.test.outputs.success_rate }}%
-                </div>
-              </div>
-
-              <!-- FIXED: This is now side-by-side grid -->
-              <div class="stats-grid">
-                <div class="stat-box stat-passed">
-                  <div class="stat-number">${{ needs.test.outputs.passed_count }}</div>
-                  <div class="stat-label">Steps Passed</div>
-                </div>
-                <div class="stat-box stat-failed">
-                  <div class="stat-number">${{ needs.test.outputs.failed_count }}</div>
-                  <div class="stat-label">Steps Failed</div>
-                </div>
-                <div class="stat-box stat-skipped">
-                  <div class="stat-number">${{ needs.test.outputs.skipped_count }}</div>
-                  <div class="stat-label">Steps Skipped</div>
-                </div>
-                <div class="stat-box stat-duration">
-                  <div class="stat-number">${{ fromJSON(needs.test.outputs.duration).totalDuration }}</div>
-                  <div class="stat-label">Total Duration</div>
-                </div>
-              </div>
-
-              <div class="summary-card ${{ needs.test.outputs.test_status == 'success' && '' || 'failed' }}">
-                <h3>Overall Status: 
-                  ${{ needs.test.outputs.test_status == 'success' && '<span style="color: #28a745; font-weight: bold;">✅ SUCCESS</span>' || '<span style="color: #dc3545; font-weight: bold;">❌ FAILED</span>' }}
-                </h3>
-                <p><strong>Scenarios:</strong> ${{ needs.test.outputs.scenarios_passed }} passed, ${{ needs.test.outputs.scenarios_failed }} failed</p>
-                <p><strong>Steps:</strong> ${{ needs.test.outputs.passed_count }} passed, ${{ needs.test.outputs.failed_count }} failed, ${{ needs.test.outputs.skipped_count }} skipped</p>
-              </div>
-
-              <h3>📋 Features Tested</h3>
-              
-              ${{ needs.test.outputs.feature_details }}
-
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" 
-                   style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
-                  📊 View Detailed HTML Report
-                </a>
-              </div>
-
-              <div class="footer">
-                <p><strong>📎 Attachments:</strong> HTML Report Screenshot</p>
-                <p><strong>👀 Next Steps:</strong> Please review the detailed report for failed scenarios and check logs for any issues.</p>
-                <p><strong>🔄 Rerun:</strong> If needed, rerun the workflow after applying fixes.</p>
-                <hr>
-                <p><em>Best regards,<br>
-                <strong>GitHub CI Bot</strong><br>
-                Techolution QA Automation</em></p>
-              </div>
-            </body>
-            </html>
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-                .summary-card { background: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 15px 0; border-radius: 5px; }
-                .summary-card.failed { border-left-color: #dc3545; }
-                .feature-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-                .feature-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; margin-top: 10px; }
-                .stat-item { padding: 5px 0; }
-                .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; justify-content: space-around; align-content: center; display: grid; }
-                .stat-box { text-align: center; padding: 15px; border-radius: 8px; color: white; display: inline-grid; }
-                .stat-passed { background: #28a745; }
-                .stat-failed { background: #dc3545; }
-                .stat-skipped { background: #ffc107; color: #333; }
-                .stat-duration { background: #17a2b8; }
-                .execution-summary-grid { 
-                  display: grid; 
-                  grid-template-columns: 1fr 1fr; 
-                  gap: 20px; 
-                  margin: 20px 0;
-                }
-                .commit-info { 
-                  background: #f1f3f4; 
-                  padding: 15px; 
-                  border-radius: 5px; 
-                  margin: 10px 0; 
-                }
-                .scenario-summary { 
-                  background: #e8f4fd; 
-                  padding: 15px; 
-                  border-radius: 5px; 
-                  margin: 10px 0;
-                }
-                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; }
-                @media (max-width: 600px) {
-                  .execution-summary-grid { grid-template-columns: 1fr; }
-                  .feature-stats-grid { grid-template-columns: 1fr; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>📊 Cucumber Test Report</h1>
-                <h2>HC x Epub : Data Ingest</h2>
-              </div>
-
-              <div class="execution-summary-grid">
-                <div class="commit-info">
-                  <h3>📝 Execution Details</h3>
-                  <strong>Repository:</strong> ${{ github.repository }}<br>
-                  <strong>Triggered By:</strong> ${{ github.actor }}<br>
-                  <strong>Commit SHA:</strong> <code>${{ github.sha }}</code><br>
-                  <strong>Branch:</strong> ${{ github.ref_name }}<br>
-                  <strong>Execution Time:</strong> ${{ fromJSON(needs.test.outputs.duration).executionTime }}
-                </div>
-
-                <div class="scenario-summary">
-                  <h3>📈 Scenario Summary</h3>
-                  <strong>Total Scenarios:</strong> ${{ needs.test.outputs.total_scenarios }}<br>
-                  <strong>Passed:</strong> ${{ needs.test.outputs.scenarios_passed }}<br>
-                  <strong>Failed:</strong> ${{ needs.test.outputs.scenarios_failed }}<br>
-                  <strong>Success Rate:</strong> ${{ needs.test.outputs.success_rate }}%
-                </div>
-              </div>
-
-              <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; justify-content: space-around; align-content: center;">
-                <div class="stat-box stat-passed">
-                  <div style="font-size: 24px; font-weight: bold;">${{ needs.test.outputs.passed_count }}</div>
-                  <div>Steps Passed</div>
-                </div>
-                <div class="stat-box stat-failed">
-                  <div style="font-size: 24px; font-weight: bold;">${{ needs.test.outputs.failed_count }}</div>
-                  <div>Steps Failed</div>
-                </div>
-                <div class="stat-box stat-skipped">
-                  <div style="font-size: 24px; font-weight: bold;">${{ needs.test.outputs.skipped_count }}</div>
-                  <div>Steps Skipped</div>
-                </div>
-                <div class="stat-box stat-duration">
-                  <div style="font-size: 24px; font-weight: bold;">${{ fromJSON(needs.test.outputs.duration).executionTime }}</div>
-                  <div>Total Duration</div>
-                </div>
-              </div>
+              <!-- Stats Grid Table - FIXED: Side by side using table -->
+              <table width="100%" cellpadding="0" cellspacing="15" border="0" style="margin: 20px 0;">
+                <tr>
+                  <td width="25%" valign="top">
+                    <div class="stat-box stat-passed">
+                      <div class="stat-number">${{ needs.test.outputs.passed_count }}</div>
+                      <div class="stat-label">Steps Passed</div>
+                    </div>
+                  </td>
+                  <td width="25%" valign="top">
+                    <div class="stat-box stat-failed">
+                      <div class="stat-number">${{ needs.test.outputs.failed_count }}</div>
+                      <div class="stat-label">Steps Failed</div>
+                    </div>
+                  </td>
+                  <td width="25%" valign="top">
+                    <div class="stat-box stat-skipped">
+                      <div class="stat-number">${{ needs.test.outputs.skipped_count }}</div>
+                      <div class="stat-label">Steps Skipped</div>
+                    </div>
+                  </td>
+                  <td width="25%" valign="top">
+                    <div class="stat-box stat-duration">
+                      <div class="stat-number">${{ fromJSON(needs.test.outputs.duration).totalDuration }}</div>
+                      <div class="stat-label">Total Duration</div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
 
               <div class="summary-card ${{ needs.test.outputs.test_status == 'success' && '' || 'failed' }}">
                 <h3>Overall Status: 
