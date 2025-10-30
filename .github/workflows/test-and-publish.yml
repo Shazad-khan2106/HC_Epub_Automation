@@ -160,7 +160,7 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: |
-            📊 Epub Automation Test Report - ${{ github.repository }} - ${{ needs.test.outputs.test_status }}
+            📊 HC_EPUB Automation Test Report - ${{ github.repository }} - ${{ needs.test.outputs.test_status }}
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub CI <${{ secrets.EMAIL_USERNAME }}>
           html_body: |
@@ -170,7 +170,7 @@ jobs:
               <meta charset="utf-8">
               <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+                .header { background: linear-gradient(135deg, #667eea87 0%, #764ba266 100%); color: #333; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
                 .summary-card { background: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 15px 0; border-radius: 5px; }
                 .summary-card.failed { border-left-color: #dc3545; }
                 .feature-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -178,18 +178,18 @@ jobs:
                 .scenario-summary { background: #e8f4fd; padding: 20px 20px 40px 20px; border-radius: 8px;height: 120%; box-sizing: border-box; }
                 .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; }
                 .stat-box { text-align: center; padding: 20px 10px; border-radius: 8px; color: white; }
-                .stat-passed { background: #28a745; }
-                .stat-failed { background: #dc3545; }
-                .stat-skipped { background: #ffc107; color: #333; }
-                .stat-duration { background: #17a2b8; }
+                .stat-passed { background: #0db3338f; color: #333; }
+                .stat-failed { background: #e0969d; color: #333; }
+                .stat-skipped { background: #f1c74770; color: #333; }
+                .stat-duration { background: #17a2b87a; color: #333; }
                 .stat-number { font-size: 28px; font-weight: bold; margin-bottom: 5px; line-height: 1; }
                 .stat-label { font-size: 14px; line-height: 1.2; }
               </style>
             </head>
             <body>
               <div class="header">
-                <h1>📊 Epub Automation Test Report</h1>
-                <h2>HC Epub</h2>
+                <h1>📊 HC_EPUB Automation Test Report</h1>
+                <h2>HC_EPUB</h2>
               </div>
 
               <!-- Execution Summary Table -->
@@ -249,7 +249,7 @@ jobs:
 
               <div class="summary-card ${{ needs.test.outputs.test_status == 'success' && '' || 'failed' }}">
                 <h3>Overall Status: 
-                  ${{ needs.test.outputs.test_status == 'success' && '<span style="color: #28a745; font-weight: bold;">✅ SUCCESS</span>' || '<span style="color: #dc3545; font-weight: bold;">❌ FAILED</span>' }}
+                  ${{ needs.test.outputs.test_status == 'failed' && '<span style="color: #28a745; font-weight: bold;">✅ SUCCESS</span>' || '<span style="color: #dc3545; font-weight: bold;">❌ FAILED</span>' }}
                 </h3>
                 <p><strong>Scenarios:</strong> ${{ needs.test.outputs.scenarios_passed }} passed, ${{ needs.test.outputs.scenarios_failed }} failed</p>
                 <p><strong>Steps:</strong> ${{ needs.test.outputs.passed_count }} passed, ${{ needs.test.outputs.failed_count }} failed, ${{ needs.test.outputs.skipped_count }} skipped</p>
@@ -261,7 +261,7 @@ jobs:
 
               <div style="text-align: center; margin: 30px 0;">
                 <a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" 
-                   style="background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                   style="background: #007bff9c; color: #333; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                   📊 View Detailed HTML Report
                 </a>
               </div>
