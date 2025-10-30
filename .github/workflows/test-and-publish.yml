@@ -26,6 +26,8 @@ jobs:
       total_scenarios: ${{ steps.set_summary.outputs.total_scenarios }}
       success_rate: ${{ steps.set_summary.outputs.success_rate }}
       feature_details: ${{ steps.set_summary.outputs.feature_details }}
+      overall_status: ${{ steps.set_summary.outputs.overall_status }}
+      pass_percentage: ${{ steps.set_summary.outputs.pass_percentage }}
 
     steps:
       - name: Checkout code
@@ -86,20 +88,9 @@ jobs:
           echo "skipped_count=$(echo $summary | jq '.totalSkipped')" >> $GITHUB_OUTPUT
           echo "scenarios_passed=$(echo $summary | jq '.scenariosPassed')" >> $GITHUB_OUTPUT
           echo "scenarios_failed=$(echo $summary | jq '.scenariosFailed')" >> $GITHUB_OUTPUT
-          
-          # Calculate total scenarios and success rate
-          scenarios_passed=$(echo $summary | jq '.scenariosPassed')
-          scenarios_failed=$(echo $summary | jq '.scenariosFailed')
-          total_scenarios=$((scenarios_passed + scenarios_failed))
-          
-          if [ $total_scenarios -gt 0 ]; then
-            success_rate=$((scenarios_passed * 100 / total_scenarios))
-          else
-            success_rate=0
-          fi
-          
-          echo "total_scenarios=$total_scenarios" >> $GITHUB_OUTPUT
-          echo "success_rate=$success_rate" >> $GITHUB_OUTPUT
+          echo "total_scenarios=$(echo $summary | jq '.totalScenarios')" >> $GITHUB_OUTPUT
+          echo "overall_status=$(echo $summary | jq -r '.overallStatus')" >> $GITHUB_OUTPUT
+          echo "pass_percentage=$(echo $summary | jq '.passPercentage')" >> $GITHUB_OUTPUT
           
           # Pass duration as JSON string
           echo 'duration<<EOF' >> $GITHUB_OUTPUT
@@ -160,7 +151,7 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: |
-            📊 HC_EPUB Automation Test Report - ${{ github.repository }} - ${{ needs.test.outputs.test_status }}
+            📊 HC_EPUB Automation Test Report - ${{ github.repository }} - ${{ needs.test.outputs.overall_status }}
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub CI <${{ secrets.EMAIL_USERNAME }}>
           html_body: |
@@ -182,6 +173,7 @@ jobs:
                 .stat-failed { background: #e0969d; color: #333; }
                 .stat-skipped { background: #f1c74770; color: #333; }
                 .stat-duration { background: #17a2b87a; color: #333; }
+                .stat-percentage { background: #6f42c17a; color: #333; }
                 .stat-number { font-size: 28px; font-weight: bold; margin-bottom: 5px; line-height: 1; }
                 .stat-label { font-size: 14px; line-height: 1.2; }
               </style>
@@ -211,7 +203,7 @@ jobs:
                       <strong>Total Scenarios:</strong> ${{ needs.test.outputs.total_scenarios }}<br>
                       <strong>Passed:</strong> ${{ needs.test.outputs.scenarios_passed }}<br>
                       <strong>Failed:</strong> ${{ needs.test.outputs.scenarios_failed }}<br>
-                      <strong>Success Rate:</strong> ${{ needs.test.outputs.success_rate }}%
+                      <strong>Success Rate:</strong> ${{ needs.test.outputs.pass_percentage }}%
                     </div>
                   </td>
                 </tr>
@@ -220,36 +212,42 @@ jobs:
               <!-- Stats Grid Table - FIXED: Side by side using table -->
               <table width="100%" cellpadding="0" cellspacing="15" border="0" style="margin: 20px 0;">
                 <tr>
-                  <td width="25%" valign="top">
+                  <td width="20%" valign="top">
                     <div class="stat-box stat-passed">
                       <div class="stat-number">${{ needs.test.outputs.passed_count }}</div>
                       <div class="stat-label">Steps Passed</div>
                     </div>
                   </td>
-                  <td width="25%" valign="top">
+                  <td width="20%" valign="top">
                     <div class="stat-box stat-failed">
                       <div class="stat-number">${{ needs.test.outputs.failed_count }}</div>
                       <div class="stat-label">Steps Failed</div>
                     </div>
                   </td>
-                  <td width="25%" valign="top">
+                  <td width="20%" valign="top">
                     <div class="stat-box stat-skipped">
                       <div class="stat-number">${{ needs.test.outputs.skipped_count }}</div>
                       <div class="stat-label">Steps Skipped</div>
                     </div>
                   </td>
-                  <td width="25%" valign="top">
+                  <td width="20%" valign="top">
                     <div class="stat-box stat-duration">
                       <div class="stat-number">${{ fromJSON(needs.test.outputs.duration).totalDuration }}</div>
                       <div class="stat-label">Total Duration</div>
                     </div>
                   </td>
+                  <td width="20%" valign="top">
+                    <div class="stat-box stat-percentage">
+                      <div class="stat-number">${{ needs.test.outputs.pass_percentage }}%</div>
+                      <div class="stat-label">Pass Percentage</div>
+                    </div>
+                  </td>
                 </tr>
               </table>
 
-              <div class="summary-card ${{ needs.test.outputs.test_status == 'success' && '' || 'failed' }}">
+              <div class="summary-card ${{ needs.test.outputs.overall_status == 'Success' || 'failed' }}">
                 <h3>Overall Status: 
-                  ${{ needs.test.outputs.test_status == 'failed' && '<span style="color: #28a745; font-weight: bold;">❌ FAILED</span>' || '<span style="color: #dc3545; font-weight: bold;">✅ SUCCESS</span>' }}
+                  ${{ needs.test.outputs.overall_status == 'Failed' && '<span style="color: #dc3545; font-weight: bold;">❌ FAILED</span>' || '<span style="color: #28a745; font-weight: bold;">✅ SUCCESS</span>' }}
                 </h3>
                 <p><strong>Scenarios:</strong> ${{ needs.test.outputs.scenarios_passed }} passed, ${{ needs.test.outputs.scenarios_failed }} failed</p>
                 <p><strong>Steps:</strong> ${{ needs.test.outputs.passed_count }} passed, ${{ needs.test.outputs.failed_count }} failed, ${{ needs.test.outputs.skipped_count }} skipped</p>
