@@ -249,7 +249,7 @@ jobs:
 
               <div class="summary-card ${{ needs.test.outputs.test_status == 'success' && '' || 'failed' }}">
                 <h3>Overall Status: 
-                  ${{ needs.test.outputs.test_status == 'failed' && '<span style="color: #28a745; font-weight: bold;">✅ SUCCESS</span>' || '<span style="color: #dc3545; font-weight: bold;">❌ FAILED</span>' }}
+                  ${{ needs.test.outputs.test_status == 'failed' && '<span style="color: #28a745; font-weight: bold;">❌ FAILED</span>' || '<span style="color: #dc3545; font-weight: bold;">✅ SUCCESS</span>' }}
                 </h3>
                 <p><strong>Scenarios:</strong> ${{ needs.test.outputs.scenarios_passed }} passed, ${{ needs.test.outputs.scenarios_failed }} failed</p>
                 <p><strong>Steps:</strong> ${{ needs.test.outputs.passed_count }} passed, ${{ needs.test.outputs.failed_count }} failed, ${{ needs.test.outputs.skipped_count }} skipped</p>
