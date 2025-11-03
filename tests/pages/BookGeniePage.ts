@@ -33,8 +33,8 @@ export class BookGeniePage {
 
     async checkModeVisiblity(mode: string) {
         this.world.addInfoLog(`Checking visibility of mode: ${mode}`);
-        await this.page.getByText(mode).waitFor({ state: 'visible' });
-        const visible = await this.page.getByText(mode).isVisible();
+        await this.page.locator(locators.bookGenieMode).waitFor({ state: 'visible' });
+        const visible = await this.page.locator(locators.bookGenieMode).isVisible();
         
         if (visible) {
             this.world.addSuccessLog(`Mode "${mode}" is visible`);
@@ -46,7 +46,7 @@ export class BookGeniePage {
 
     async selectMode(mode: string) {
         this.world.addInfoLog(`Selecting mode: ${mode}`);
-        await this.page.getByText(mode).waitFor({ state: 'visible' });
+        await this.page.locator(locators.bookGenieMode).waitFor({ state: 'visible' });
         await this.page.locator(locators.bookGenieMode).click();
         this.world.addSuccessLog(`Mode "${mode}" selected successfully`);
         await this.page.waitForTimeout(2000);
@@ -279,7 +279,7 @@ private async tryAlternativeSelector(): Promise<boolean> {
             this.world.addInfoLog('Extracting HTML content from response');
             const htmlContent = await bookGenieResponseLocator.innerHTML();
             this.world.addInfoLog(`HTML content extracted - Length: ${htmlContent.length} characters`);
-            
+            console.log(htmlContent)
             this.world.addInfoLog('Parsing HTML to extract book data');
             const books = BookExtractor.extractBooksFromHTML(htmlContent);
             

@@ -18,7 +18,8 @@ export class BookExtractor {
         this.log('Starting HTML content extraction');
         this.log(`HTML content length: ${htmlContent.length} characters`);
 
-        const questionMatch = htmlContent.match(/<summary[^>]*>.*?<span[^>]*>([^<]+)<\/span>/);
+        // Extract question - fixed pattern
+        const questionMatch = htmlContent.match(/<summary[^>]*>\s*<span[^>]*>([^<]+)<\/span>/);
         const question = questionMatch ? questionMatch[1].trim() : 'Unknown Query';
         
         this.log(`Extracted question: "${question}"`);
@@ -67,8 +68,8 @@ export class BookExtractor {
     }
 
     private static extractAuthor(section: string): string {
-        // Extract author from the pattern: <p class="py-2 font-bold inline-flex gap-1">Author:</p> Rachel Campos-Duffy and Sean Duffy
-        const authorMatch = section.match(/Author:.*?<\/p>\s*([^<]+)/);
+        // Fixed pattern for author extraction
+        const authorMatch = section.match(/Author:.*?<\/p><\/span>\s*([^<]+)/);
         const author = authorMatch ? authorMatch[1].trim() : '';
         
         if (author) {
@@ -81,8 +82,8 @@ export class BookExtractor {
     }
 
     private static extractPublishingDate(section: string): string {
-        // Extract publishing date from the pattern: <p class="py-2 font-bold inline-flex gap-1">Publishing Date:</p> NOV-16-2021
-        const dateMatch = section.match(/Publishing Date:.*?<\/p>\s*([^<]+)/);
+        // Fixed pattern for publishing date
+        const dateMatch = section.match(/Publishing Date:.*?<\/p><\/span>\s*([^<]+)/);
         const publishingDate = dateMatch ? dateMatch[1].trim() : '';
         
         if (publishingDate) {
@@ -95,8 +96,8 @@ export class BookExtractor {
     }
 
     private static extractImprint(section: string): string {
-        // Extract imprint from the pattern: <p class="py-2 font-bold inline-flex gap-1">Imprint:</p> Broadside e-books
-        const imprintMatch = section.match(/Imprint:.*?<\/p>\s*([^<]+)/);
+        // Fixed pattern for imprint
+        const imprintMatch = section.match(/Imprint:.*?<\/p><\/span>\s*([^<]+)/);
         const imprint = imprintMatch ? imprintMatch[1].trim() : '';
         
         if (imprint) {
@@ -108,79 +109,105 @@ export class BookExtractor {
         return imprint;
     }
 
-  private static extractReasonsWithCitations(section: string): { reason: string; highlightedText: string }[] {
-    const reasons: { reason: string; highlightedText: string }[] = [];
-    
-    this.log('Extracting reasons with citations from section');
-
-    const whyStart = section.indexOf('Why this book is the');
-    if (whyStart === -1) {
-        this.log('No "Why this book is the match" section found');
-        return reasons;
-    }
-
-    const whyEnd = section.indexOf('</ol>', whyStart);
-    if (whyEnd === -1) {
-        this.log('No closing </ol> tag found for reasons section');
-        return reasons;
-    }
-
-    const whySection = section.substring(whyStart, whyEnd);
-    this.log(`Why section length: ${whySection.length} characters`);
-
-    // Extract all list items
-    const liMatches = [...whySection.matchAll(/<li>([\s\S]*?)<\/li>/gi)];
-    
-    for (let i = 0; i < liMatches.length; i++) {
-        const liContent = liMatches[i][1];
-        let reasonText = '';
-        let highlightedText = '';
-
-        // FIRST: Extract the complete reason text (everything before the first parenthesis)
-        const textUntilBracket = liContent.split('(')[0].trim();
-        let completeReason = textUntilBracket.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    private static extractReasonsWithCitations(section: string): { reason: string; highlightedText: string }[] {
+        const reasons: { reason: string; highlightedText: string }[] = [];
         
-        // SECOND: Extract highlighted text separately
-        const highlightMatch = liContent.match(/<span[^>]*text-\[\#d63384\][^>]*>.*?<p[^>]*>([^<]*)<\/p><\/span>/);
-        if (highlightMatch && highlightMatch[1]) {
-            highlightedText = highlightMatch[1].trim();
-            this.log(`Extracted highlighted text: "${highlightedText}"`);
+        this.log('Extracting reasons with citations from section');
+
+        // Find the "Why this book is the" section
+        const whyMatch = section.match(/Why this book is the.*?Match<\/span><\/summary>\s*<ol[^>]*>([\s\S]*?)<\/ol>/);
+        if (!whyMatch) {
+            this.log('No "Why this book is the match" section found');
+            return reasons;
         }
 
-        // Use the complete reason text, not just the highlighted part
-        reasonText = completeReason;
-        
-        if (reasonText && reasonText.length > 10) { // Only add if it's meaningful text
-            reasons.push({
-                reason: reasonText,
-                highlightedText: highlightedText
-            });
-            this.log(`Extracted complete reason ${i + 1}: "${reasonText.substring(0, 80)}..."`);
-        }
-    }
+        const whySection = whyMatch[1];
+        this.log(`Why section length: ${whySection.length} characters`);
 
-    this.log(`Total reasons extracted: ${reasons.length}`);
-    return reasons;
-}
+        // Extract all list items
+        const liMatches = [...whySection.matchAll(/<li>([\s\S]*?)<\/li>/gi)];
+        
+        for (let i = 0; i < liMatches.length; i++) {
+            const liContent = liMatches[i][1];
+            
+            // Extract the complete reason text by removing citation spans and HTML tags
+            let reasonText = liContent
+                .replace(/<span class="BookCitation[^>]*>.*?<\/span>/g, '') // Remove citation spans
+                .replace(/<[^>]*>/g, '') // Remove all remaining HTML tags
+                .replace(/\s+/g, ' ') // Normalize whitespace
+                .trim();
+
+            // Extract highlighted text - look for text inside the pink colored spans
+            const highlightMatches = [...liContent.matchAll(/<span[^>]*text-\[\#d63384\][^>]*>.*?<p[^>]*>([^<]*)<\/p><\/span>/g)];
+            let highlightedText = '';
+            
+            if (highlightMatches.length > 0) {
+                // Combine all highlighted texts from this list item
+                highlightedText = highlightMatches.map(match => match[1].trim()).join(' | ');
+                this.log(`Extracted highlighted text: "${highlightedText}"`);
+            }
+
+            if (reasonText && reasonText.length > 10) {
+                reasons.push({
+                    reason: reasonText,
+                    highlightedText: highlightedText
+                });
+                this.log(`Extracted complete reason ${i + 1}: "${reasonText.substring(0, 80)}..."`);
+            }
+        }
+
+        this.log(`Total reasons extracted: ${reasons.length}`);
+        return reasons;
+    }
 
     private static splitBookSections(htmlContent: string): string[] {
         const sections: string[] = [];
         
         this.log('Splitting HTML into book sections');
 
-        // Find each book section starting with details containing a number
-        const bookStartRegex = /<details[^>]*>\s*<summary[^>]*>.*?\d+\.\s*[^<]*/gi;
+        // Find each book section starting with details that contain a number in the summary
+        // Fixed pattern to match the actual HTML structure
+        const bookStartRegex = /<details[^>]*>\s*<summary[^>]*>\s*<span[^>]*>\d+\.\s*[^<]*<\/span>/gi;
         const matches = [...htmlContent.matchAll(bookStartRegex)];
         
-        this.log(`Found ${matches.length} potential book sections`);
+        this.log(`Found ${matches.length} potential book sections using regex`);
 
-        for (let i = 0; i < matches.length; i++) {
-            const start = matches[i].index;
-            const end = i < matches.length - 1 ? matches[i + 1].index : htmlContent.length;
-            const section = htmlContent.substring(start, end);
+        // Alternative approach: look for book titles directly
+        if (matches.length === 0) {
+            this.log('Trying alternative section splitting approach');
+            // Look for any details that contain book title patterns
+            const altMatches = [...htmlContent.matchAll(/<details[^>]*>\s*<summary[^>]*>\s*<span[^>]*>[\d\w\s\.]+<\/span>/gi)];
+            this.log(`Found ${altMatches.length} sections with alternative approach`);
             
-            if (section.length > 100) { // Minimum section length
-                sections.push(section);
+            for (let i = 0; i < altMatches.length; i++) {
+                const start = altMatches[i].index;
+                let end = htmlContent.length;
+                
+                if (i < altMatches.length - 1) {
+                    end = altMatches[i + 1].index;
+                }
+                
+                const section = htmlContent.substring(start, end);
+                
+                // Only include if it has book metadata
+                if (section.includes('Book Title:') && section.length > 200) {
+                    sections.push(section);
+                }
+            }
+        } else {
+            for (let i = 0; i < matches.length; i++) {
+                const start = matches[i].index;
+                let end = htmlContent.length;
+                
+                if (i < matches.length - 1) {
+                    end = matches[i + 1].index;
+                }
+                
+                const section = htmlContent.substring(start, end);
+                
+                if (section.includes('Book Title:') && section.length > 200) {
+                    sections.push(section);
+                }
             }
         }
 
@@ -189,7 +216,8 @@ export class BookExtractor {
     }
 
     private static extractBookTitle(section: string): string {
-        const titleMatch = section.match(/Book Title:.*?<\/p>\s*([^<]+)/);
+        // Fixed pattern for book title
+        const titleMatch = section.match(/Book Title:.*?<\/p><\/span>\s*([^<]+)/);
         const title = titleMatch ? titleMatch[1].trim() : '';
         
         if (title) {
@@ -202,46 +230,53 @@ export class BookExtractor {
     }
 
     private static extractRelevanceScore(section: string): string {
-        const scoreMatch = section.match(/Relevance Score:.*?<\/p>\s*([^<]+)/);
-        const score = scoreMatch ? scoreMatch[1].trim() : '0';
+        // Fixed pattern for relevance score
+        const scoreMatch = section.match(/Relevance Score:.*?<\/p><\/span>\s*<p[^>]*>([^<%]+)/);
+        let score = scoreMatch ? scoreMatch[1].replace('%', '').trim() : '0';
+        
+        // Alternative pattern
+        if (score === '0') {
+            const altScoreMatch = section.match(/Relevance Score:.*?(\d+)%/);
+            score = altScoreMatch ? altScoreMatch[1] : '0';
+        }
         
         this.log(`Extracted relevance score: ${score}%`);
         return score;
     }
 
     private static extractGap(section: string): string {
-        const gapStart = section.indexOf('The Gap</span>');
-        if (gapStart === -1) {
+        const gapMatch = section.match(/The Gap<\/span><\/summary>\s*<ol[^>]*>([\s\S]*?)<\/ol>/);
+        if (!gapMatch) {
             this.log('No gap section found');
             return '';
         }
 
-        const gapEnd = section.indexOf('</ol>', gapStart);
-        if (gapEnd === -1) {
-            this.log('No closing tag for gap section');
-            return '';
-        }
-
-        const gapSection = section.substring(gapStart, gapEnd);
+        const gapSection = gapMatch[1];
         const gapItems: string[] = [];
         
-        let liStart = gapSection.indexOf('<li>');
-        while (liStart !== -1) {
-            const liEnd = gapSection.indexOf('</li>', liStart);
-            if (liEnd === -1) break;
-
-            const liContent = gapSection.substring(liStart + 4, liEnd);
-            const cleanText = liContent.replace(/<[^>]*>/g, '').trim();
+        // Extract list items from gap section
+        const liMatches = [...gapSection.matchAll(/<li>([\s\S]*?)<\/li>/gi)];
+        
+        for (const match of liMatches) {
+            const liContent = match[1];
+            // Clean the text by removing HTML tags and citations
+            const cleanText = liContent
+                .replace(/<span class="BookCitation[^>]*>.*?<\/span>/g, '')
+                .replace(/<[^>]*>/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
             
             if (cleanText) {
                 gapItems.push(cleanText);
             }
-            
-            liStart = gapSection.indexOf('<li>', liEnd);
         }
 
         const gapText = gapItems.join(' | ');
-        this.log(`Extracted gap: ${gapText.substring(0, 50)}...`);
+        if (gapText) {
+            this.log(`Extracted gap: ${gapText.substring(0, 50)}...`);
+        } else {
+            this.log('No gap text extracted');
+        }
         
         return gapText;
     }
